@@ -45,9 +45,9 @@ int SortSequency(int MemberNum, int *RelationMap, int *InDegree, char *SortResul
 
 	*SortResult = Top + 'A';
 	InDegree[Top] = INVALID_VALUE;
-	RelationMap += Top * MAX_MEMBER_NUM;
+	//RelationMap += Top * MAX_MEMBER_NUM;
 	for (i = 0; i < MemberNum; i++) {
-		if (*(RelationMap + i) != 0) {
+		if (*(RelationMap + i + Top * MAX_MEMBER_NUM) != 0) {
 			InDegree[i] -= 1;
 		}
 	}
@@ -68,6 +68,7 @@ int SortSequency(int MemberNum, int *RelationMap, int *InDegree, char *SortResul
 int main(void)
 {
 	int RelationMap[MAX_MEMBER_NUM][MAX_MEMBER_NUM];
+	int InDegreeTemp[MAX_MEMBER_NUM];
 	int InDegree[MAX_MEMBER_NUM];
 	int MemberNum;
 	int MemberIndex0;
@@ -77,7 +78,7 @@ int main(void)
 	char RelationSort[MAX_MEMBER_NUM + 1];
 	int Result;
 	int ret;
-	int i;
+	int i, j;
 	
 	#if DEBUG==1
 	printf("RelationSort addr=0x%x \n", RelationSort);
@@ -122,6 +123,10 @@ int main(void)
 
 			InDegree[MemberIndex1] += 1;
 			RelationMap[MemberIndex0][MemberIndex1] = 1;
+			if(RelationMap[MemberIndex1][MemberIndex0] == 1) {
+				Result = RESULT_FAIL_INCONSISTENCY;
+				break;
+			}
 
 			if (i < (MemberNum - 1))
 				continue;
@@ -131,9 +136,10 @@ int main(void)
 					InDegree[0], InDegree[1], InDegree[2], InDegree[3]);
 			#endif
 
+			memcpy(InDegreeTemp, InDegree, sizeof(InDegreeTemp));
 			Result = SortSequency(MemberNum,
 					      RelationMap,
-					      InDegree,
+					      InDegreeTemp,
 					      RelationSort);
 			if (Result != RESULT_FAIL_NOT_SORT)
 				break;
@@ -141,11 +147,17 @@ int main(void)
 
 		switch (Result) {
 		case RESULT_SUCC:
-			printf("Sorted sequency determined after %d relations:%s\n", RelationSort);
+			printf("Sorted sequency determined after %d relations:%s\n", i, RelationSort);
 			break;
 
 		case RESULT_FAIL_INCONSISTENCY:
 			printf("Inconsistency found after %d relations\n", i);
+			for (i = 0; i < MemberNum; i ++) {
+				for (j = 0; j < MemberNum; j++) {
+					printf("%d ", RelationMap[i][j]);
+				}
+				printf("\n");
+			}
 			break;
 
 		case RESULT_FAIL_NOT_SORT:
